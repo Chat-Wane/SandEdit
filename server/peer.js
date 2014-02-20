@@ -1,35 +1,40 @@
-var hashes = require('hashes');
-var dgram = require('dgram');
+var smoke = require('smokesignal');
+var SSeq = require('./sseq.js');
 
-function Peer(port, maxViewSize, tick){
-    this._port = port;
-    this._view = new hashes.HashTable();
-    this._maxViewSize = maxViewSize;
-    this._tick = tick;
-    this._udp = dgram.createSock('udp4');
-    this._udp.bind(this._port);
-    this._udp.on("message", function(msg, rinfo){
-	// #1 Request neighbours
-	// #2 Regular message
-    });
+var s = new SSeq(42);
+var node = smoke.createNode({
+  port: parseInt(process.argv[2])
+, address: smoke.localIp('127.0.0.1/255.0.0.0')
+, seeds: [{port: 6666, address:'127.0.0.1'}]
+})
 
-    this._udp.on("listening", function(){
-	console.log("Peer is awake, listening on "+ this._port);
-    });
+console.log('Port', node.options.port)
+console.log('IP', node.options.address)
+console.log('ID', node.id)
+
+console.log('Connecting...');
+
+node.on('connect', function() {
+    console.log('Connection established.');    
+    this.emit('insert', 'a', 0);
+});
+
+node.on('disconnect', function() {
+  console.log('Disconnected.');
+});
+
+node.on('error', function(e) {throw e});
+
+node.on('insert', function(e, i){
+    var ei = s._array.insert(e,i);
+    s.push(JSON.stringify({_type:'INS', _data:ei}));
+});
+
+node.on('delete', function(i){
+    var id = s._array.remove(i);
+    s.push(JSON.stringify({_type:'REM', _data:id}));
 };
 
-Peer.prototype.scramble() = function(){
+s.pipe(node.broadcast).pipe(s);
 
-};
-
-Peer.prototype.removeOldItems = function(){
-
-};
-
-Peer.prototype.removeHead = function(){
-
-};
-
-Peer.prototype.removeAtRandom = function(){
-
-};
+node.start();
