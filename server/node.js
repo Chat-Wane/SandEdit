@@ -11,22 +11,15 @@ function Node(id, localPort, remotePort){
 
     var self = this;
 
-    this._s._emitter.on("insert", function(e,i){
-	console.log("aAFAHOZVZOEVEZOBVEZOBVEZ "+ e + "  "+ i) ;
+    this._s._emitter.on("insert", function(e,i){ // from sseq -> node
 	self._node.emit('INS',e,i);
     });
     
-    this._s._emitter.on("remove", function(i){
+    this._s._emitter.on("remove", function(i){ // from sseq -> node
 	self._node.emit('DEL',i);
     });
     
-    /*!
-     * \var node
-     * \brief the local event of the peer to broadcast
-     * \param argv[3] the port of this peer
-     * \param argv[4] the port of the seed
-     */
-
+    /////
     this._node = smoke.createNode({
 	port: localPort
 	, address: smoke.localIp('127.0.0.1/255.0.0.0')
@@ -49,16 +42,17 @@ function Node(id, localPort, remotePort){
     
     this._node.on('error', function(e) {throw e});
     
-    this._node.on('insert', function(e, i){
+    this._node.on('insert', function(e, i){ // from node -> sseq
 	var ei = self._s._array.insert(e,i);
 	self._s._vector.increment();
 	self._s.push(JSON.stringify({_type:'INS',
 			       _causal:{_e: self._s._vector._e,
-					_c: self._s._vector._v[self._s._e]},
+					_c: self._s._vector._v[
+					    self._s._vector._e]},
 			       _data:ei}));
     });
     
-    this._node.on('remove', function(i){
+    this._node.on('remove', function(i){ // from node -> sseq
 	var id = self._s._array.remove(i);
 	var couple = {_e: id._s[id._s.length - 1],
 		      _c: id._c[id._c.length - 1] };

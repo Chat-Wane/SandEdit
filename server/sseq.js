@@ -27,12 +27,14 @@ SSeq.prototype._write = function(chunk, encoding, callback) {
 	    this._vector.incrementFrom(tei._causal);
 	    var index = this._array.applyInsert(tei._data._e, tei._data._i);
 	    this._emitter.emit('insert', tei._data._e, index);
+	    // from sseq -> node
 
 	    for (var i=0; i<this._buffer.length; ++i){
 		var msg = this._buffer[i];
 		if (this._vector.isRdy(msg._causal)){
 		    var index = this._array.applyRemove(tei._data);
 		    this._emitter.emit('remove', index);
+		    // from sseq -> node
 		    this._array.splice(i, 1);
 		    --i;
 		};
@@ -42,7 +44,7 @@ SSeq.prototype._write = function(chunk, encoding, callback) {
     if (tei._type == 'REM'){
 	if (this._vector.isRdy(tei._causal)){
 	    var index = this._array.applyRemove(tei._data);
-	    this._emitter.emit('remove', index);
+	    this._emitter.emit('remove', index); // from sseq -> node
 	}else{
 	    this._buffer.push(tei);
 	};
