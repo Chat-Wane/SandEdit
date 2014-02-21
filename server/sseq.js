@@ -1,28 +1,53 @@
 var Duplex = require('stream').Duplex;
 var LSEQArray = require('lseqarray');
+var IVV = require('causaltrack').IVV;
 var util = require('util');
 util.inherits(SSeq, Duplex);
 
+var MAX_SITE = 100;
+
 function SSeq(site, options){
     Duplex.call(this, options);
+    this._vector = new IVV(site,MAX_SITE);
+    this._buffer = [];
     this._array = new LSEQArray(site);
 };
 
 // receiving data // input
 SSeq.prototype._read = function(n) {
-//    console.log('in_read:' + n );
 };
 
 // emiting data // output
 SSeq.prototype._write = function(chunk, encoding, callback) {
-//    console.log("in_write: " + chunk);
     var tei = JSON.parse(chunk);
     if (tei._type == 'INS'){
-	this._array.applyInsert(tei._data._e, tei._data._i);
+	console.log("test");
+	if (!this._vector.isLower(tei._causal)){
+	    this._vector.incrementFrom(tei._causal);
+	    this._array.applyInsert(tei._data._e, tei._data._i);
+	    
+	    for (var i=0; i<this._buffer.length; ++i){
+		var msg = this._buffer[i];
+		if (this._vector.isRdy(msg._causal)){
+		    this._array.applyRemove(tei._data);
+		    this._array.splice(i, 1);
+		    --i;
+		};
+	    };
+	};
     };
-    if (tei._type == 'DEL'){
-	this._array.applyInsert(tei._data);
+    if (tei._type == 'REM'){
+	console.log("test2");
+	if (this._vector.isRdy(tei._causal)){
+	    console.log(tei._data);
+	    this._array.applyRemove(tei._data);
+	}else{
+	    this._buffer.push(tei);
+	};
     };
+    
+    console.log(this._array);
+
     callback();
 };
 
