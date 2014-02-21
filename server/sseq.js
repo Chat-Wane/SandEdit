@@ -1,4 +1,5 @@
 var Duplex = require('stream').Duplex;
+var EventEmitter = require('events').EventEmitter;
 var LSEQArray = require('lseqarray');
 var IVV = require('causaltrack').IVV;
 var util = require('util');
@@ -11,6 +12,7 @@ function SSeq(site, options){
     this._vector = new IVV(site,MAX_SITE);
     this._buffer = [];
     this._array = new LSEQArray(site);
+    this._emitter = new EventEmitter();
 };
 
 // receiving data // input
@@ -21,15 +23,16 @@ SSeq.prototype._read = function(n) {
 SSeq.prototype._write = function(chunk, encoding, callback) {
     var tei = JSON.parse(chunk);
     if (tei._type == 'INS'){
-	console.log("test");
 	if (!this._vector.isLower(tei._causal)){
 	    this._vector.incrementFrom(tei._causal);
-	    this._array.applyInsert(tei._data._e, tei._data._i);
-	    
+	    var index = this._array.applyInsert(tei._data._e, tei._data._i);
+	    this._emitter.emit('insert', tei._data._e, index);
+
 	    for (var i=0; i<this._buffer.length; ++i){
 		var msg = this._buffer[i];
 		if (this._vector.isRdy(msg._causal)){
-		    this._array.applyRemove(tei._data);
+		    var index = this._array.applyRemove(tei._data);
+		    this._emitter.emit('remove', index);
 		    this._array.splice(i, 1);
 		    --i;
 		};
@@ -37,17 +40,13 @@ SSeq.prototype._write = function(chunk, encoding, callback) {
 	};
     };
     if (tei._type == 'REM'){
-	console.log("test2");
 	if (this._vector.isRdy(tei._causal)){
-	    console.log(tei._data);
-	    this._array.applyRemove(tei._data);
+	    var index = this._array.applyRemove(tei._data);
+	    this._emitter.emit('remove', index);
 	}else{
 	    this._buffer.push(tei);
 	};
     };
-    
-    console.log(this._array);
-
     callback();
 };
 
