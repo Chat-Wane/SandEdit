@@ -1,16 +1,24 @@
 var smoke = require('smokesignal');
 var SSeq = require('./sseq.js');
 
-
+/*!
+ * \class Node
+ * \brief embed the communication and the application layers
+ * \param id the unique identifier of the site
+ * \param localPort the port used by the local site
+ * \param remotePort the port a connected remote site 
+ */
 function Node(id, localPort, remotePort){
 
-    /* \var s the remote part of events
-     * \param argv[2] the unique id of the site
-     */
-    this._s = new SSeq(id);
-
     var self = this;
+    this._s = new SSeq(id);
+    this._node = smoke.createNode({
+	port: localPort
+	, address: smoke.localIp('127.0.0.1/255.0.0.0')
+	, seeds: [{port: remotePort, address:'127.0.0.1'}]
+    });
 
+    ///////////
     this._s._emitter.on("insert", function(e,i){ // from sseq -> node
 	self._node.emit('INS',e,i);
     });
@@ -18,13 +26,8 @@ function Node(id, localPort, remotePort){
     this._s._emitter.on("remove", function(i){ // from sseq -> node
 	self._node.emit('DEL',i);
     });
-    
-    /////
-    this._node = smoke.createNode({
-	port: localPort
-	, address: smoke.localIp('127.0.0.1/255.0.0.0')
-	, seeds: [{port: remotePort, address:'127.0.0.1'}]
-    })
+    ///////////
+    ///////////
     
     console.log('Port', this._node.options.port)
     console.log('IP', this._node.options.address)
@@ -32,6 +35,8 @@ function Node(id, localPort, remotePort){
 
     console.log('Connecting...');
     
+    ///////////
+    ///////////
     this._node.on('connect', function() {
 	console.log('Connection established.');    
     });
@@ -60,11 +65,11 @@ function Node(id, localPort, remotePort){
 				     _causal: couple,
 				     _data: id}));
     });
-    
+    ////////////
+    ////////////
+
     self._s.pipe(this._node.broadcast).pipe(self._s);
-    
-    this._node.start();
-    
+    this._node.start();    
 };
 
 module.exports = Node;
