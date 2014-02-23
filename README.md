@@ -15,9 +15,20 @@ The browser part of this project is only a prototype. It does not manage
 multiple documents, saving document etc... Nevertheless, it should be in the
 near future (hopefully).
 
+## Installation
+
+Not published yet. Will be asap on the npm repository.
+
 ## Usage
 
 ### Within your browser
+
+For now, one socket.io server corresponds to one node. It will not necessarily
+stay that way.
+
+```
+$ node browser.js id socketioPort [seedPort [localPort]]
+```
 
 ### As a Node.js module
 
@@ -59,4 +70,12 @@ SandEdit uses the following packages:
      the management of the p2p decentralized network </li>
 <li> [socket.io](https://github.com/LearnBoost/socket.io):
      the browser display </li>
+</ul>
+
+Within the web page served by socket.io:
+<ul>
+<li> [ace](https://github.com/ajaxorg/ace): the code editor embedded in the
+     web page </li>
+<li> [bootstrap](https://github.com/twbs/bootstrap): the style of the web page
+     </li>
 </ul>
