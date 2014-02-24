@@ -35,47 +35,41 @@ $ node browser.js id socketioPort [seedPort [localPort]]
 Ongoing work, the specifications are not met yet.
 
 ```javascript
-var Node = require('sandedit').Node;
+var Replica = require('sandedit').Replica;
 
-// #1 creating a new node
-// 0 is the unique identifier of the site
-// 1337 is the port of our local node
-// 1400 is the port of a connected node
-var node = new Node(0, 1337, 1400);
+// #1 creating a new node holding a sequence
+var replica = new Replica(siteId, maxSite,
+    localAddress, localPort, localMask,
+    remoteAddress, remotePort);
 
 // #2 inserting an element
 // insert the character 'a' at index 0
-node.emit('insert', 'a', 0);
+replica.emit('insert', 'a', 0);
 
 // #3 removing an element
 // remove the character at index 0
-node.emit('remove', 0)
+replica.emit('remove', 0)
 
 // #4 received a remote insertion
-node.on('INS', function(element, index){ ... });
+replica.on('INS', function(element, index){ ... });
 
 // #5 received a remote removing
-node.on('DEL', function(index){ ... });
+replica.on('DEL', function(index){ ... });
 ```
 
 ## Dependencies
 
 SandEdit uses the following packages:
-<ul>
-<li> [causaltrack](https://github.com/Chat-Wane/CausalTrack):
-     the structure for handling causality </li>
-<li> [lseqarray](https://github.com/Chat-Wane/LSEQArray):
-     the distributed data structure of the array </li>
-<li> [smokesignal](https://github.com/marcelklehr/smokesignal):
-     the management of the p2p decentralized network </li>
-<li> [socket.io](https://github.com/LearnBoost/socket.io):
-     the browser display </li>
-</ul>
+*    [causaltrack](https://github.com/Chat-Wane/CausalTrack):
+     the structure for handling causality
+*    [lseqarray](https://github.com/Chat-Wane/LSEQArray):
+     the distributed data structure of the array
+*    [smokesignal](https://github.com/marcelklehr/smokesignal):
+     the management of the p2p decentralized network
+*    [socket.io](https://github.com/LearnBoost/socket.io):
+     the browser display
 
 Within the web page served by socket.io:
-<ul>
-<li> [ace](https://github.com/ajaxorg/ace): the code editor embedded in the
-     web page </li>
-<li> [bootstrap](https://github.com/twbs/bootstrap): the style of the web page
-     </li>
-</ul>
+*    [ace](https://github.com/ajaxorg/ace): the code editor embedded in the
+     web page
+*    [bootstrap](https://github.com/twbs/bootstrap): the style of the web page

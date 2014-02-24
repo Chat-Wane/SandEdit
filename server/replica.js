@@ -1,8 +1,9 @@
 var smoke = require('smokesignal');
-var Node = smoke.Node;
+var Node = require('smokesignal/lib/node');
 var LSEQArray = require('lseqarray');
 var CausalStream = require('./causalstream.js');
-
+var util = require('util');
+util.inherits(Replica, Node);
 
 /*!
  * \class Node
@@ -12,7 +13,7 @@ var CausalStream = require('./causalstream.js');
  * \param remotePort the port a connected remote site 
  */
 function Replica(site, maxSite,
-		 localAddress, localMask, localPort,
+		 localAddress, localPort, localMask,
 		 remoteAddress, remotePort){
     var opts = {port: localPort,
 		address: smoke.localIp(localAddress+"/"+localMask),

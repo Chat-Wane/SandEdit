@@ -1,9 +1,17 @@
-var id = parseInt(process.argv[2]);
-var httpPort = parseInt(process.argv[3]);
-var remotePort = parseInt(process.argv[4]) || (httpPort +1);
-var localPort = parseInt(process.argv[5]) || (httpPort + 1);
+var site = parseInt(process.argv[2]);
+var maxSite = parseInt(process.argv[3]);
 
-var node = new (require("./node.js"))(id, localPort, remotePort);
+var httpPort = parseInt(process.argv[4]);
+var localAddress = process.argv[5].split(':')[0];
+var localPort = parseInt(process.argv[5].split(':')[1]);
+var localMask = process.argv[6];
+
+var remoteAddress = process.argv[7].split(':')[0];
+var remotePort = parseInt(process.argv[7].split(':')[1]);
+
+var replica = new (require("./replica.js"))(site, maxSite,
+					    localAddress, localPort, localMask,
+					    remoteAddress, remotePort);
 var httpServer = require("http").createServer(httpHandler)
 var io = require('socket.io').listen(httpServer);
 var fs = require('fs');
@@ -12,18 +20,18 @@ httpServer.listen(httpPort);
 
 io.sockets.on( 'connection', function(socket){
     socket.on('INS', function(data){ // from browser -> node
-	node._node.emit('insert', data._e, data._i);
+	replica.emit('insert', data._e, data._i);
     });
 
     socket.on('DEL', function(data){ // from browser -> node
-	node._node.emit('remove', data);
+	replica.emit('remove', data);
     });
     
-    node._node.on('INS', function(e,i){ // from node -> browser
+    replica.on('INS', function(e,i){ // from node -> browser
 	socket.emit('insert',{_e:e, _i:i});
     });
 
-    node._node.on('DEL', function(i){ // from node -> browser
+    replica.on('DEL', function(i){ // from node -> browser
 	socket.emit('delete',{_i:i});
     });
 });

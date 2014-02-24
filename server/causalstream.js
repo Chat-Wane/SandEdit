@@ -1,7 +1,7 @@
 var Duplex = require('stream').Duplex;
 var IVV = require('causaltrack').IVV;
 var util = require('util');
-util.inherits(SSeq, Duplex);
+util.inherits(CausalStream, Duplex);
 
 /*!
  * \class CausalStream
