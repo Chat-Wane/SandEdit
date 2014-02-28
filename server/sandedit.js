@@ -34,6 +34,8 @@ io.sockets.on( 'connection', function(socket){
     replica.on('DEL', function(i){ // from node -> browser
 	socket.emit('delete',{_i:i});
     });
+
+    socket.emit('init', {_array: replica.toString() });
 });
 
 function httpHandler(req, res) {

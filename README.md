@@ -27,7 +27,10 @@ For now, one socket.io server corresponds to one node. It will not necessarily
 stay that way.
 
 ```
-$ node browser.js id socketioPort [seedPort [localPort]]
+$ node sandedit.js siteId maxSite
+       socketioPort replicaAddress replicaMask
+       remoteAddress
+$ node sandedit.js 0 42 1337 127.0.0.1:1338 255.0.0.0 127.0.0.1:1338
 ```
 
 ### As a Node.js module
