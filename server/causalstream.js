@@ -47,8 +47,8 @@ CausalStream.prototype._write = function(chunk, encoding, callback) {
 	};
     };
     if (tei._type == 'REM'){ // #2 delete operation
-	var causal = {_e: tei._data._i._s[tei._data._i._s.length - 1],
-		      _c: tei._data._i._c[tei._data._i._c.length - 1]};
+	var causal = {_e: tei._data._s[tei._data._s.length - 1],
+		      _c: tei._data._c[tei._data._c.length - 1]};
 	if (this._ivv.isRdy(causal)){ // #2a look for its target
 	    // #2b Propagate the remove operation to the application
 	    this._parent.emit('remoteRemove', tei._data);
