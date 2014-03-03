@@ -20,8 +20,8 @@ function Replica(site, maxSite,
 		address: smoke.localIp(localAddress+"/"+localMask),
 		seeds: [{port: remotePort, address:remoteAddress}]};
 
-
-		   
+    this.stateTransfer = false; // one state transfer allowed
+	   
     Node.call(this, opts);
     var self = this;
     
@@ -30,7 +30,8 @@ function Replica(site, maxSite,
 
     // #1 State transfer    
     this.peers.on('add', function(peer) {
-	if (self.peers.list.length == 1){
+	if (!(self.stateTransfer) && (self.peers.list.length >= 1)){
+	    stateTransfer = true;
 	    peer.socket.send(['replica', 'requestState']);
 	    
 	    peer.socket.data(['replica', 'requestState'], function(){
@@ -46,17 +47,18 @@ function Replica(site, maxSite,
 			empty = false;
 		    };
 		};
+		
 		if (!(empty)){ 
 		    // #3a copy the array
 		    for (var i=1; i <= data._array.length; ++i){
-			var e = data._array[i]._e;
-			var id = data._array[i]._i;
-			this.emit('remoteInsert', e ,id);
+			var e = data._array._array[i]._e;
+			var id = data._array._array[i]._i;
+			self.emit('remoteInsert', e ,id);
 		    };
 		    // #3c copy the causality array
-		    var entry = this._causalStream._ivv._e;
-		    this._causalStream._ivv = data._causal;
-		    this._causalStream._ivv._e = entry;
+		    self._causalStream._ivv._v = data._causal._v;
+		    self._causalStream._ivv._o = data._causal._o;
+		    self._causalStream._ivv._e = data._causal._e;
 		};
 	    });
 	};
@@ -65,12 +67,18 @@ function Replica(site, maxSite,
     // #2 Local and Remote Events
     this.on('insert', function(e, i){ // from node -> sseq
 	var ei = self._array.insert(e,i);
+        var causal = {_e: ei._i._s[ei._i._s.length - 1],
+                      _c: ei._i._c[ei._i._c.length - 1]};
+	self._causalStream._ivv.incrementFrom(causal);
 	self._causalStream.push(JSON.stringify({_type: 'INS',	
 						_data: ei}));
     });
     
     this.on('remove', function(i){ // from node -> sseq
 	var id = self._array.remove(i);
+	var causal = {_e: id._s[id._s.length - 1],
+		      _c: id._c[id._c.length - 1]};
+	self._causalStream._ivv.incrementFrom(causal);
 	self._causalStream.push(JSON.stringify({_type: 'REM',
 						_data: id}));
     });
@@ -82,7 +90,7 @@ function Replica(site, maxSite,
     
     this.on('remoteRemove', function(i){
 	var index = this._array.applyRemove(i);
-	self.emit('REM', index);
+	self.emit('DEL', index);
     });
 
     this.on('connect', function() {
