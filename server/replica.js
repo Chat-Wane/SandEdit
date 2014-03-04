@@ -7,13 +7,16 @@ var util = require('util');
 util.inherits(Replica, Node);
 
 /*!
- * \class Node
+ * \class Replica
  * \brief embed the communication and the application layers
- * \param id the unique identifier of the site
+ * \param site the unique identifier of the site
+ * \param localAddress the ip address of the local site
  * \param localPort the port used by the local site
+ * \param localMask the ip mask of the local address
+ * \param remoteAddress the address of the remote site
  * \param remotePort the port a connected remote site 
  */
-function Replica(site, maxSite,
+function Replica(site,
 		 localAddress, localPort, localMask,
 		 remoteAddress, remotePort){
     var opts = {port: localPort,
@@ -26,7 +29,7 @@ function Replica(site, maxSite,
     var self = this;
     
     this._array = new LSEQArray(site);
-    this._causalStream = new CausalStream(this, site, maxSite);
+    this._causalStream = new CausalStream(this, site);
 
     // #1 State transfer    
     this.peers.on('add', function(peer) {
@@ -58,7 +61,6 @@ function Replica(site, maxSite,
 		    // #3c copy the causality array
 		    self._causalStream._ivv._v = data._causal._v;
 		    self._causalStream._ivv._o = data._causal._o;
-		    self._causalStream._ivv._e = data._causal._e;
 		};
 	    });
 	};

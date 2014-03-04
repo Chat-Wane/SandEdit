@@ -1,6 +1,6 @@
 {
     "name": "sandedit",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "author": "Chat-Wane <grumpy.chat.wane@gmail.com>",
     "description": "A distributed collaborative editor with an optionnal web front-end.",
     "main": "./server/replica.js",
@@ -18,7 +18,7 @@
 	"smokesignal": "0.2.x",
 	"nssocket": "0.5.x",
 	"lseqarray": "0.1.x",
-	"causaltrack": "0.1.x"
+	"causaltrack": "0.2.x"
     },
     "bundledDependencies": [
 	"smokesignal",

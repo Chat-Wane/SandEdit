@@ -8,10 +8,10 @@ util.inherits(CausalStream, Duplex);
  * \brief Input Output of the dissemination protocol
  * \param option the additionnal argument for the duplex class
  */
-function CausalStream(parent, site, maxSite, options){
+function CausalStream(parent, site, options){
     Duplex.call(this, options);
     this._parent = parent;
-    this._ivv = new IVV(site, maxSite);
+    this._ivv = new IVV(site);
     this._buffer = [];
 };
 

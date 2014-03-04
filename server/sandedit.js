@@ -1,15 +1,14 @@
 var site = parseInt(process.argv[2]);
-var maxSite = parseInt(process.argv[3]);
 
-var httpPort = parseInt(process.argv[4]);
-var localAddress = process.argv[5].split(':')[0];
-var localPort = parseInt(process.argv[5].split(':')[1]);
-var localMask = process.argv[6];
+var httpPort = parseInt(process.argv[3]);
+var localAddress = process.argv[4].split(':')[0];
+var localPort = parseInt(process.argv[4].split(':')[1]);
+var localMask = process.argv[5];
 
-var remoteAddress = process.argv[7].split(':')[0];
-var remotePort = parseInt(process.argv[7].split(':')[1]);
+var remoteAddress = process.argv[6].split(':')[0];
+var remotePort = parseInt(process.argv[6].split(':')[1]);
 
-var replica = new (require("./replica.js"))(site, maxSite,
+var replica = new (require("./replica.js"))(site,
 					    localAddress, localPort, localMask,
 					    remoteAddress, remotePort);
 var httpServer = require("http").createServer(httpHandler)

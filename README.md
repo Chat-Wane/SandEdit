@@ -31,10 +31,11 @@ $ npm install socket.io
 
 ```
 $ cd sandedit
-$ node server siteId maxSite
+$ node server
+       siteId
        socketioPort replicaAddress replicaMask
        remoteAddress
-$ node server 0 42 1337 127.0.0.1:1338 255.0.0.0 127.0.0.1:1338
+$ node server 0 1337 127.0.0.1:1338 255.0.0.0 127.0.0.1:1338
 ```
 
 ### As a Node.js module
@@ -43,7 +44,7 @@ $ node server 0 42 1337 127.0.0.1:1338 255.0.0.0 127.0.0.1:1338
 var Replica = require('sandedit');
 
 // #1 creating a new node holding a sequence
-var replica = new Replica(siteId, maxSite,
+var replica = new Replica(siteId, 
     localAddress, localPort, localMask,
     remoteAddress, remotePort);
 
