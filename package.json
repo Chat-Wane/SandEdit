@@ -1,0 +1,33 @@
+{
+    "name": "sandedit",
+    "version": "0.1.0",
+    "author": "Chat-Wane <grumpy.chat.wane@gmail.com>",
+    "description": "A distributed collaborative editor with an optionnal web front-end.",
+    "main": "./server/replica.js",
+    "repository": {
+	"type": "git",
+	"url": "https://github.com/chat-wane/SandEdit.git"
+    },
+    "keywords": [
+	"distributed",
+	"decentralized",
+	"collaborative editing",
+	"LSEQ"
+    ],
+    "dependencies": {
+	"smokesignal": "0.2.x",
+	"nssocket": "0.5.x",
+	"lseqarray": "0.1.x",
+	"causaltrack": "0.1.x"
+    },
+    "bundledDependencies": [
+	"smokesignal",
+	"nssocket",
+	"lseqarray",
+	"causaltrack"
+    ],
+    "license": "MIT",
+    "engines": {
+	"node": ">=0.10.26"
+    }
+}

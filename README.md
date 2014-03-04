@@ -17,28 +17,30 @@ near future (hopefully).
 
 ## Installation
 
-Not published yet. Will be asap on the npm repository.
+```
+$ npm install sandedit
+```
 
 ## Usage
 
 ### Within your browser
 
-For now, one socket.io server corresponds to one node. It will not necessarily
-stay that way.
+```
+$ npm install socket.io
+```
 
 ```
-$ node sandedit.js siteId maxSite
+$ cd sandedit
+$ node server siteId maxSite
        socketioPort replicaAddress replicaMask
        remoteAddress
-$ node sandedit.js 0 42 1337 127.0.0.1:1338 255.0.0.0 127.0.0.1:1338
+$ node server 0 42 1337 127.0.0.1:1338 255.0.0.0 127.0.0.1:1338
 ```
 
 ### As a Node.js module
 
-Ongoing work, the specifications are not met yet.
-
 ```javascript
-var Replica = require('sandedit').Replica;
+var Replica = require('sandedit');
 
 // #1 creating a new node holding a sequence
 var replica = new Replica(siteId, maxSite,
