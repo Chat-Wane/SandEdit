@@ -93,7 +93,7 @@ function Peer(membership, application, siteId){
     
     // #antientropy
     setInterval(function(){
-	if (self._vvwe._e==c.PORT){ // debug
+	if (self._vvwe._e==10){ // debug
 	    console.log()
 	    console.log(self._vvwe.toString());
 	};

@@ -6,21 +6,21 @@ var P = require('./peer.js');
 
 var peers = [];
 
+
 // #A create all peers
 for (var i=0; i < c.PEERS; ++i){
-
-    // #1 create membership
+   // #1 create membership
     var m = new M(c.SUBNET, c.PORT+i);
-    
+
+    var uid = c.PEERS*(parseInt(m._localIP.split('.')[3]))+i;    
+
     // #2 create application
-    var a = new A(c.PORT+i);
+    var a = new A(uid);
     
     // #3a create peer and establish sockets
-    var p = new P(m, a, c.PORT+i);
+    var p = new P(m, a, uid);
     // #3b register the peer
     peers.push(p);
-
-
 };
 
 initNeighbours();
