@@ -23,7 +23,6 @@ for (var i=0; i < c.PEERS; ++i){
     peers.push(p);
 };
 
-initNeighbours();
 exportNeighbours();
 
 // #B create the operation events
@@ -60,31 +59,22 @@ function partition(i){
 
 
 // #C exporting the data to files
-function initNeighbours(){
-    fs.writeFileSync(c.dataFolder+
-		     "neighbours"+peers[0]._vvwe._e+
-		     ".csv", "")
-};
-
 function exportNeighbours(){
+    var neighboursList = [];
     for (var i = 0; i < peers.length; ++i){
 	var neighboursString = "" ;
 	for (var j = 0;  j < peers[i]._membership._neighbours.length; ++j){
 	    neighboursString = 
-		neighboursString +
 		peers[i]._membership._localIP+":"+
 		peers[i]._membership._port + ";" +
 		peers[i]._membership._neighbours[j]._ip+":"+
-		peers[i]._membership._neighbours[j]._port+"\n";
+		peers[i]._membership._neighbours[j]._port;
+	    neighboursList.push(neighboursString);
 	};
-	fs.appendFile(c.dataFolder+'neighbours'+
-		      peers[0]._vvwe._e+
-		      '.csv', neighboursString, function (err){
-			  if (err){
-			      console.log("Append error: neighbours.csv file");
-			  };
-		      });
     };
+    fs.writeFile(c.dataFolder+
+		 "neighbours"+peers[0]._vvwe._e+
+		 ".csv", neighboursList.join("\n"), function(err){});
 };
 
 function exportMetadata(){
