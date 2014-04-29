@@ -29,6 +29,12 @@ function Peer(membership, application, siteId){
     this._socket = dgram.createSocket('udp4');
     this._socket.bind(this._membership._port, this._membership._localIP);
 
+    // #1c measurements
+    this._msgSize = 0;
+    this._msgCount = 0;
+    this._measurements = [];
+    this._checkpoint = 0;
+
     var self=this;    
     // #2 local update event
     this.on("local", function(operation){
@@ -36,6 +42,11 @@ function Peer(membership, application, siteId){
 	var msg = new Buffer(JSON.stringify({_operation: operation,
 					     _hop: c.HOP}));
 	self.broadcast(msg);
+	if (this._application._lseq.length==c.CHECKPOINTS[this._checkpoint]){
+	    this._measurements[this._checkpoint]={_msgCount:this._msgCount,
+						  _msgSize :this._msgSize};
+	    this._checkpoint += 1;
+	};
     });
     
     // #3 receive update event
@@ -122,10 +133,17 @@ Peer.prototype.receive = function(operation){
     if (!this._vvwe.isLower(couple)){ // new data
 	this._vvwe.incrementFrom(couple);
 	this._application.emit("deliver", operation);
+	if (this._application._lseq.length==c.CHECKPOINTS[this._checkpoint]){
+	    this._measurements[this._checkpoint]={_msgCount:this._msgCount,
+						  _msgSize :this._msgSize};
+	    this._checkpoint += 1;
+	};
     };
 };
 
 Peer.prototype.broadcast = function(msg){
+    this._msgSize += msg.length;
+    this._msgCount += 1;
     var n = this._membership.neighbours(c.NEIGHBOURS);
     for (var i=0;i<n.length;++i){
 	this._socket.send(msg,0,msg.length,n[i]._port,n[i]._ip,null);

@@ -1,3 +1,4 @@
+var fs = require('fs');
 var c = require('./config.js');
 var M = require('./membership.js');
 var A = require('./application.js');
@@ -18,7 +19,12 @@ for (var i=0; i < c.PEERS; ++i){
     var p = new P(m, a, c.PORT+i);
     // #3b register the peer
     peers.push(p);
+
+
 };
+
+initNeighbours();
+exportNeighbours();
 
 // #B create the operation events
 for (var i=0; i<c.PARTITIONTIME;++i){
@@ -39,6 +45,9 @@ function partition(i){
     if (i==(c.PARTITIONTIME-1)){
 	for (var j=0; j<c.PEERS; ++j){
 	    setTimeout(function(peer){
+		if (peer == 0){
+		    exportMetadata();
+		};
 		console.log("");
 		console.log(peer+"._lseq.length : "+
 			    peers[peer]._application._lseq.length);
@@ -47,4 +56,62 @@ function partition(i){
 	    }, c.PARTITIONTIME+c.STOPTIME, j);
 	};
     };
+};
+
+
+// #C exporting the data to files
+function initNeighbours(){
+    fs.writeFileSync(c.dataFolder+
+		     "neighbours"+peers[0]._vvwe._e+
+		     ".csv", "")
+};
+
+function exportNeighbours(){
+    for (var i = 0; i < peers.length; ++i){
+	var neighboursString = "" ;
+	for (var j = 0;  j < peers[i]._membership._neighbours.length; ++j){
+	    neighboursString = 
+		neighboursString +
+		peers[i]._membership._localIP+":"+
+		peers[i]._membership._port + ";" +
+		peers[i]._membership._neighbours[j]._ip+":"+
+		peers[i]._membership._neighbours[j]._port+"\n";
+	};
+	fs.appendFile(c.dataFolder+'neighbours'+
+		      peers[0]._vvwe._e+
+		      '.csv', neighboursString, function (err){
+			  if (err){
+			      console.log("Append error: neighbours.csv file");
+			  };
+		      });
+    };
+};
+
+function exportMetadata(){
+    var countMsgs = [];
+    var sizeMsgs = [];
+    for (var j = 0; j < peers[0]._measurements.length; ++j){
+	var countLine = [];
+	var sizeLine = [];
+	for (var i = 0; i < peers.length ; ++i){
+	    countLine.push(peers[i]._measurements[j]._msgCount);
+	    sizeLine.push(peers[i]._measurements[j]._msgSize);
+	};
+	countMsgs.push(countLine.join(" "));
+	sizeMsgs.push(sizeLine.join(" "));
+    };
+    fs.writeFile(c.dataFolder+
+		 'countMsg'+ peers[0]._vvwe._e, countMsgs.join("\n"),
+		 function (err) {
+		     if (err){
+			 console.log("Append error: countMsg file");
+		     };
+		 });
+    fs.writeFile(c.dataFolder+
+		 'sizeMsg'+peers[0]._vvwe._e, sizeMsgs.join("\n"),
+		 function (err) {
+		     if (err){
+			 console.log("Append error: sumSizeMsg file");
+		     };
+		 });
 };

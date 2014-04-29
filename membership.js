@@ -1,12 +1,21 @@
-var Netmask = require('netmask');
+var Netmask = require('netmask').Netmask;
 var fs = require('fs');
+var os = require('os');
+
 var c = require('./config.js');
 
 function Membership(subnet, port){
-    this._port = port;
+    this._listIP = [];
+    this.initListIP();
+
     this._subnet = subnet;
+    this._port = port;
+    this._localIP = this.localIP();
+
     this._neighbours = [];
-    this._nbCall = 0
+    this._nbCall = 0;
+
+    this.neighbours(c.NEIGHBOURS);
 };
 
 /*!
@@ -16,24 +25,29 @@ function Membership(subnet, port){
 Membership.prototype.neighbours = function(k){
     if ((this._nbCall%c.MBSPCALL)==0){
      	this._neighbours = this.newNeighbours(k);
+	this._nbCall = 0;
     };
     this._nbCall = this._nbCall + 1;
     return this._neighbours;
 };
 
-Membership.prototype.newNeighbours = function(k){
+Membership.prototype.initListIP = function(){
     var data = fs.readFileSync(c.ipFile);
     var ips = data.toString().split('\n');
-    
+    for (var i = 0; i < ips.length; ++i){
+	if (ips[i] != ""){
+	    this._listIP.push(ips[i]);
+	};
+    };
+};
+
+Membership.prototype.newNeighbours = function(k){
     var listNeighbours = [];
     while (listNeighbours.length < k){
-	var ip = "";
-	while (ip == ""){
-	    ip = ips[Math.floor(Math.random()*ips.length)];
-	};
 	var port = c.PORT+ Math.floor(Math.random()*c.PEERS);
+	var ip = this._listIP[Math.floor(Math.random()*this._listIP.length)];
 	// a check if "wazn't me"
-	if ((ip != this.localIP) || (port != this._port)){
+	if ((ip != this._localIP) || (port != this._port)){
 	    // b check if no double
 	    var duplicate = false;
 	    var i = 0;
