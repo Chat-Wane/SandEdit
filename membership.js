@@ -1,4 +1,5 @@
 var Netmask = require('netmask');
+var fs = require('fs');
 var c = require('./config.js');
 
 function Membership(subnet, port){
@@ -14,16 +15,22 @@ function Membership(subnet, port){
  */
 Membership.prototype.neighbours = function(k){
     if ((this._nbCall%c.MBSPCALL)==0){
-	this._neighbours = this.newNeighbours(k);
+     	this._neighbours = this.newNeighbours(k);
     };
     this._nbCall = this._nbCall + 1;
     return this._neighbours;
 };
 
 Membership.prototype.newNeighbours = function(k){
+    var data = fs.readFileSync(c.ipFile);
+    var ips = data.toString().split('\n');
+    
     var listNeighbours = [];
     while (listNeighbours.length < k){
-	var ip = c.IPROOT +  Math.floor(c.IPSTART + Math.random()*c.IPRANGE); 
+	var ip = "";
+	while (ip == ""){
+	    ip = ips[Math.floor(Math.random()*ips.length)];
+	};
 	var port = c.PORT+ Math.floor(Math.random()*c.PEERS);
 	// a check if "wazn't me"
 	if ((ip != this.localIP) || (port != this._port)){

@@ -1,4 +1,5 @@
 module.exports.dataFolder = "./data/";
+module.exports.ipFile = "IPs";
 
 module.exports.STARTTIME = (10000); // 10 s
 module.exports.RUNNINGTIME = (50*60000); // 50 min
