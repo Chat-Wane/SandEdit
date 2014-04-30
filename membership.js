@@ -72,10 +72,9 @@ Membership.prototype.newNeighbours = function(k){
 Membership.prototype.localIP = function() {
     //Determine my IP
     var interfaces = os.networkInterfaces()
-    , block = new Netmask(this._subnet)
+    , block = new Netmask(this._subnet+"/"+c.MASK)
     , ip
     for(var name in interfaces) {
-	if(this.remoteAddress) break
 	for(var i=0 ; i < interfaces[name].length; ++i) {
 	    if(interfaces[name][i].family == 'IPv6') continue
 	    if(!block.contains(interfaces[name][i].address))
