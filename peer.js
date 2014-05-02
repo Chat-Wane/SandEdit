@@ -7,8 +7,6 @@ var VVwE = require('causaltrack').VVwE;
 
 util.inherits(Peer, EventEmitter);
 
-var DIFF = 20;
-
 /*!
  * \class Peer
  * \brief Provide a reliable and scalable communication assuming a 50+
@@ -93,21 +91,33 @@ function Peer(membership, application, siteId){
     
     // #antientropy
     setInterval(function(){
-	if (self._vvwe._e==10){ // debug
-	    console.log()
-	    console.log(self._vvwe.toString());
-	};
+	var n = self._membership.neighbours(c.NEIGHBOURS);
 	var keys = Object.keys(self._vvwe._v);
-	var result = [];
-	for (var i=0; i<keys.length; ++i){
-	    if (self._vvwe._x[keys[i]].length > 0){
-		var couple = {_e:keys[i], _c:(self._vvwe._x[keys[i]]) };
-		result.push(couple);
-	    };
+	var partitionSize = Math.ceil( keys.length / n.length );
+	var partitionNumber = 0;
+	if ( partitionSize > 0){
+	    partitionNumber = Math.ceil( keys.length / partitionSize );
 	};
-	if (result.length > 0){
-	    msg = new Buffer(JSON.stringify({_request:result}));
-	    self.broadcast(msg);
+	for (var i = 0; i < partitionNumber; ++i){
+	    var result = [];
+	    for (var j=0; j < partitionSize; ++j){
+		var entry = keys[j*partitionNumber + i];
+		if((entry in self._vvwe._x) &&
+		   self._vvwe._x[entry].length > 0){
+		    var couple = {_e:keys[i], _c:(self._vvwe._x[entry]) };
+		    result.push(couple);
+		};
+	    };
+	    if (result.length > 0){
+		msg = new Buffer(JSON.stringify({_request:result}));
+		for (var k=0; k < c.AENEIGHBOURS;++k){// send to part of neighb
+		    if ((i+k) in n){
+			self._socket.send(msg,0,msg.length,
+					  n[i+k]._port,n[i+k]._ip,null);
+		    };
+		};
+		
+	    };
 	};
     }, c.ANTIENTROPY); // End anti-entropy
 
