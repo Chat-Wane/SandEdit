@@ -37,8 +37,7 @@ function Peer(membership, application, siteId){
     // #2 local update event
     this.on("local", function(operation){
 	self._vvwe.increment();
-	var msg = new Buffer(JSON.stringify({_operation: operation,
-					     _hop: c.HOP}));
+	var msg = new Buffer(JSON.stringify({_operation: operation}));
 	self.broadcast(msg);
 	if (this._application._lseq.length==c.CHECKPOINTS[this._checkpoint]){
 	    this._measurements[this._checkpoint]={_msgCount:this._msgCount,
@@ -53,10 +52,9 @@ function Peer(membership, application, siteId){
 	var realMsg = JSON.parse(msg);
 	if ("_operation" in realMsg){
 	    // #3a.  notify the receipt of a new update
-	    self.receive(realMsg._operation);
+	    var isNew = self.receive(realMsg._operation);
 	    // #3a.. resend to my neighbours
-	    if (("_hop" in realMsg) && (realMsg._hop > 0)){
-		realMsg._hop = realMsg._hop - 1;
+	    if (isNew){
 		var resendMsg = new Buffer(JSON.stringify(realMsg));
 		self.broadcast(resendMsg);
 	    };
@@ -142,7 +140,8 @@ function Peer(membership, application, siteId){
 Peer.prototype.receive = function(operation){
     var couple = {_e: operation._i._s[operation._i._s.length - 1],
 		  _c: operation._i._c[operation._i._c.length - 1]};
-    if (!this._vvwe.isLower(couple)){ // new data
+    var isNew = !(this._vvwe.isLower(couple));
+    if (isNew){ // new data
 	this._vvwe.incrementFrom(couple);
 	this._application.emit("deliver", operation);
 	if (this._application._lseq.length==c.CHECKPOINTS[this._checkpoint]){
@@ -151,6 +150,7 @@ Peer.prototype.receive = function(operation){
 	    this._checkpoint += 1;
 	};
     };
+    return isNew;
 };
 
 Peer.prototype.broadcast = function(msg){
