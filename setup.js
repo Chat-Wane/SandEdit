@@ -74,7 +74,7 @@ function exportNeighbours(){
     };
     fs.writeFile(c.dataFolder+
 		 "neighbours"+peers[0]._vvwe._e+
-		 ".csv", neighboursList.join("\n"), function(err){});
+		 ".csv", neighboursList.join("\n")+"\n", function(err){});
 };
 
 function exportMetadata(){

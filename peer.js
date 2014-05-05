@@ -112,6 +112,8 @@ function Peer(membership, application, siteId){
 		msg = new Buffer(JSON.stringify({_request:result}));
 		for (var k=0; k < c.AENEIGHBOURS;++k){// send to part of neighb
 		    if ((i+k) in n){
+			self._msgSize += msg.length; // metrology
+			self._msgCount += 1; // metrology
 			self._socket.send(msg,0,msg.length,
 					  n[i+k]._port,n[i+k]._ip,null);
 		    };
@@ -152,8 +154,8 @@ Peer.prototype.receive = function(operation){
 };
 
 Peer.prototype.broadcast = function(msg){
-    this._msgSize += msg.length;
-    this._msgCount += 1;
+    this._msgSize += (c.NEIGHBOURS * msg.length); // metrology
+    this._msgCount += c.NEIGHBOURS; // metrology
     var n = this._membership.neighbours(c.NEIGHBOURS);
     for (var i=0;i<n.length;++i){
 	this._socket.send(msg,0,msg.length,n[i]._port,n[i]._ip,null);
