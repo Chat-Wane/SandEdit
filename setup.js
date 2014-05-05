@@ -19,11 +19,12 @@ for (var i=0; i < c.PEERS; ++i){
     
     // #3a create peer and establish sockets
     var p = new P(m, a, uid);
+    p.start();
     // #3b register the peer
     peers.push(p);
 };
 
-exportNeighbours();
+setTimeout(exportNeighbours, Math.floor(c.STARTTIME/2));
 
 // #B create the operation events
 for (var i=0; i<c.PARTITIONTIME;++i){
@@ -63,12 +64,10 @@ function exportNeighbours(){
     var neighboursList = [];
     for (var i = 0; i < peers.length; ++i){
 	var neighboursString = "" ;
-	for (var j = 0;  j < peers[i]._membership._neighbours.length; ++j){
+	for (var j = 0;  j < peers[i].peers.list.length; ++j){
 	    neighboursString = 
-		peers[i]._membership._localIP+":"+
-		peers[i]._membership._port + ";" +
-		peers[i]._membership._neighbours[j]._ip+":"+
-		peers[i]._membership._neighbours[j]._port;
+		peers[i].id+";"+
+		peers[i].peers.list[j].id;
 	    neighboursList.push(neighboursString);
 	};
     };

@@ -1,11 +1,12 @@
-var dgram = require('dgram');
+var smoke = require('smokesignal');
+var Node = require('smokesignal/lib/node.js');
 var util = require('util');
-var EventEmitter = require('events').EventEmitter;
 
+var SimpleStream = require('./simplestream.js');
 var c = require('./config.js');
 var VVwE = require('causaltrack').VVwE;
 
-util.inherits(Peer, EventEmitter);
+util.inherits(Peer, Node);
 
 /*!
  * \class Peer
@@ -13,7 +14,19 @@ util.inherits(Peer, EventEmitter);
  * percentage of travelling coverage by the operations
  */
 function Peer(membership, application, siteId){
-    EventEmitter.call(this);
+    var n = membership.neighbours();
+    var seedlist = [];
+    for (var i = 0; i < n.length; ++i){
+	seedlist.push({port:n[i]._port, address:n[i]._ip });
+    };
+    var opts = {
+	port: membership._port,
+	address: membership._localIP,
+	seeds: seedlist,
+	minPeerNo: c.NEIGHBOURS,
+	maxPeerNo: c.NEIGHBOURS
+    };
+    Node.call(this,opts);
     // #1 init the peer
     // #1a the application layer
     this._application = application;
@@ -23,23 +36,23 @@ function Peer(membership, application, siteId){
     this._vvwe = new VVwE(siteId);
 
     // #1b communication
+    this._simpleStream = new SimpleStream(this);
+    this._simpleStream.pipe(this.broadcast).pipe(this._simpleStream);
     this._membership = membership;
-    this._socket = dgram.createSocket('udp4');
-    this._socket.bind(this._membership._port, this._membership._localIP);
-
+    
     // #1c measurements
     this._msgSize = 0;
     this._msgCount = 0;
     this._measurements = [];
     this._checkpoint = 0;
-
+    
     var self=this;    
     // #2 local update event
     this.on("local", function(operation){
 	self._vvwe.increment();
-	var msg = new Buffer(JSON.stringify({_operation: operation,
-					     _hop: c.HOP}));
-	self.broadcast(msg);
+	var msg = new Buffer(JSON.stringify({_operation: operation}));
+	self._broadcast(msg);
+	// metrology
 	if (this._application._lseq.length==c.CHECKPOINTS[this._checkpoint]){
 	    this._measurements[this._checkpoint]={_msgCount:this._msgCount,
 						  _msgSize :this._msgSize};
@@ -49,21 +62,11 @@ function Peer(membership, application, siteId){
     
     // #3 receive update event
     // #3a redirect the message to the proper event
-    this._socket.on('message', function(msg, info){
+    this.on('message', function(msg){
 	var realMsg = JSON.parse(msg);
 	if ("_operation" in realMsg){
 	    // #3a.  notify the receipt of a new update
 	    self.receive(realMsg._operation);
-	    // #3a.. resend to my neighbours
-	    if (("_hop" in realMsg) && (realMsg._hop > 0)){
-		realMsg._hop = realMsg._hop - 1;
-		var resendMsg = new Buffer(JSON.stringify(realMsg));
-		self.broadcast(resendMsg);
-	    };
-	} else if ("_request" in realMsg){
-	    self.emit("operationRequest",
-		      realMsg._request,
-		      {_address:info.address, _port:info.port});
 	} else if ("_response" in realMsg){
 	    for (var i=0; i<realMsg._response.length; ++i){
 		self.receive(realMsg._response[i]);
@@ -71,7 +74,19 @@ function Peer(membership, application, siteId){
 	};
     });
     
-    this.on("operationRequest", function(delta, address){
+    this.peers.on('add', function(peer) {
+	peer.socket.data(['peer', 'operationRequest'], function(msg){
+	    var realMsg = JSON.parse(msg);
+	    self.emit("operationRequest",
+		      realMsg._request,
+		      peer);
+	});
+	peer.socket.data(['peer', 'operationResponse'], function(delta){
+	    self.emit("message", delta);
+	});
+    });
+
+    this.on("operationRequest", function(delta, peer){
 	var result = [];
 	for (var i = 0; i<delta.length; ++i){
 	    for (var j = 0; j<delta[i]._c.length; ++j){
@@ -85,13 +100,12 @@ function Peer(membership, application, siteId){
 	    };
 	};
 	var msg = new Buffer(JSON.stringify({_response:result}));
-	self._socket.send(msg,0,msg.length,
-			  address._port,address._address,null);
+	peer.socket.send(['peer','operationResponse'], msg);
     });
     
     // #antientropy
     setInterval(function(){
-	var n = self._membership.neighbours(c.NEIGHBOURS);
+	var n = self.peers.list;
 	var keys = Object.keys(self._vvwe._v);
 	var partitionSize = Math.ceil( keys.length / n.length );
 	var partitionNumber = 0;
@@ -114,8 +128,7 @@ function Peer(membership, application, siteId){
 		    if ((i+k) in n){
 			self._msgSize += msg.length; // metrology
 			self._msgCount += 1; // metrology
-			self._socket.send(msg,0,msg.length,
-					  n[i+k]._port,n[i+k]._ip,null);
+			n[i+k].socket.send(['peer','operationRequest'],msg);
 		    };
 		};
 		
@@ -153,13 +166,10 @@ Peer.prototype.receive = function(operation){
     };
 };
 
-Peer.prototype.broadcast = function(msg){
+Peer.prototype._broadcast = function(msg){
     this._msgSize += (c.NEIGHBOURS * msg.length); // metrology
     this._msgCount += c.NEIGHBOURS; // metrology
-    var n = this._membership.neighbours(c.NEIGHBOURS);
-    for (var i=0;i<n.length;++i){
-	this._socket.send(msg,0,msg.length,n[i]._port,n[i]._ip,null);
-    };
+    this._simpleStream.push(msg);
 };
 
 module.exports = Peer;
