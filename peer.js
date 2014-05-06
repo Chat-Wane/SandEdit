@@ -51,9 +51,7 @@ function Peer(membership, application, siteId){
     this.on("local", function(operation){
 	self._vvwe.increment();
 	var msg = new Buffer(JSON.stringify({_operation: operation}));
-	if (Math.random() > 0.01){
-	    self._broadcast(msg);
-	};
+	self._broadcast(msg);
 	// metrology
 	if (this._application._lseq.length==c.CHECKPOINTS[this._checkpoint]){
 	    this._measurements[this._checkpoint]={_msgCount:this._msgCount,
