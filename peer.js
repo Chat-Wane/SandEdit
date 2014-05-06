@@ -33,7 +33,8 @@ function Peer(membership, application, siteId){
     this._measurements = [];
     this._checkpoint = 0;
 
-    var self=this;    
+    var self=this;
+    
     // #2 local update event
     this.on("local", function(operation){
 	self._vvwe.increment();
@@ -55,8 +56,7 @@ function Peer(membership, application, siteId){
 	    var isNew = self.receive(realMsg._operation);
 	    // #3a.. resend to my neighbours
 	    if (isNew){
-		var resendMsg = new Buffer(JSON.stringify(realMsg));
-		self.broadcast(resendMsg);
+		self.broadcast(msg);
 	    };
 	} else if ("_request" in realMsg){
 	    self.emit("operationRequest",
@@ -83,6 +83,8 @@ function Peer(membership, application, siteId){
 	    };
 	};
 	var msg = new Buffer(JSON.stringify({_response:result}));
+	self._msgSize += msg.length; // metrology
+	self._msgCount += result.length; // metrology
 	self._socket.send(msg,0,msg.length,
 			  address._port,address._address,null);
     });
@@ -99,10 +101,10 @@ function Peer(membership, application, siteId){
 	for (var i = 0; i < partitionNumber; ++i){
 	    var result = [];
 	    for (var j=0; j < partitionSize; ++j){
-		var entry = keys[j*partitionNumber + i];
+		var entry = keys[i*partitionNumber + j]; // I OR J ? TOTHING?
 		if((entry in self._vvwe._x) &&
 		   self._vvwe._x[entry].length > 0){
-		    var couple = {_e:keys[i], _c:(self._vvwe._x[entry]) };
+		    var couple = {_e:entry, _c:(self._vvwe._x[entry]) };
 		    result.push(couple);
 		};
 	    };
@@ -110,13 +112,10 @@ function Peer(membership, application, siteId){
 		msg = new Buffer(JSON.stringify({_request:result}));
 		for (var k=0; k < c.AENEIGHBOURS;++k){// send to part of neighb
 		    if ((i+k) in n){
-			self._msgSize += msg.length; // metrology
-			self._msgCount += 1; // metrology
 			self._socket.send(msg,0,msg.length,
 					  n[i+k]._port,n[i+k]._ip,null);
 		    };
-		};
-		
+		};		
 	    };
 	};
     }, c.ANTIENTROPY); // End anti-entropy
