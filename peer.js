@@ -2,6 +2,7 @@ var smoke = require('smokesignal');
 var Node = require('smokesignal/lib/node.js');
 var util = require('util');
 
+var Broadcast = require('smokesignal/lib/broadcast');
 var SimpleStream = require('./simplestream.js');
 var c = require('./config.js');
 var VVwE = require('causaltrack').VVwE;
@@ -47,6 +48,26 @@ function Peer(membership, application, siteId){
     this._checkpoint = 0;
     
     var self=this;    
+
+    // Proxy on broadcast to monitor
+    this.broadcast.sendPacket = function(type, packet, except) {
+	self.broadcast.knownPackets[packet.id] = true
+	setTimeout(function() {
+	    // don't leak memory! Delete all entries after 60s
+	    delete self.broadcast.knownPackets[packet.id]
+	}.bind(self.broadcast), 1000*60)
+	
+	self.peers.list.forEach(function(peer) {
+	    if(peer === except) return
+	    if(type[1] == "broadcast"){
+		self._msgCount +=  1;
+		self._msgSize += packet.data.length;
+	    };
+	    peer.socket.send(type, packet)
+	});
+	return packet.id
+    };
+    
     // #2 local update event
     this.on("local", function(operation){
 	self._vvwe.increment();
@@ -119,8 +140,6 @@ function Peer(membership, application, siteId){
 	if (result.length > 0){
 	    msg = JSON.stringify({_request:result});
 	    for (var k=0; k < self.peers.list.length ;++k){
-//		self._msgSize += msg.length; // metrology
-//		self._msgCount += 1; // metrology
 		self.peers.list[k].socket.send(['peer','operationRequest'],
 					       msg);
 	    };
@@ -144,8 +163,6 @@ Peer.prototype.receive = function(operation){
 };
 
 Peer.prototype._broadcast = function(msg){
-    this._msgSize += (c.NEIGHBOURS * msg.length); // metrology
-    this._msgCount += c.NEIGHBOURS; // metrology
     this._simpleStream.push(msg);
 };
 
