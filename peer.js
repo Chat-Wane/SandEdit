@@ -51,7 +51,9 @@ function Peer(membership, application, siteId){
     this.on("local", function(operation){
 	self._vvwe.increment();
 	var msg = new Buffer(JSON.stringify({_operation: operation}));
-	self._broadcast(msg);
+	if (Math.random() > 0.01){
+	    self._broadcast(msg);
+	};
 	// metrology
 	if (this._application._lseq.length==c.CHECKPOINTS[this._checkpoint]){
 	    this._measurements[this._checkpoint]={_msgCount:this._msgCount,
@@ -75,7 +77,7 @@ function Peer(membership, application, siteId){
     });
     
     this.peers.on('add', function(peer) {
-	peer.socket.data(['peer', 'operationRequest'], function(msg){
+	peer.socket.data(['peer', 'operationRequest'], function(realMsg){
 	    var realMsg = JSON.parse(msg);
 	    self.emit("operationRequest",
 		      realMsg._request,
@@ -99,7 +101,7 @@ function Peer(membership, application, siteId){
 		};
 	    };
 	};
-	var msg = new Buffer(JSON.stringify({_response:result}));
+	var msg = JSON.stringify({_response:result});
 	peer.socket.send(['peer','operationResponse'], msg);
     });
     
@@ -107,49 +109,26 @@ function Peer(membership, application, siteId){
     setInterval(function(){
 	var n = self.peers.list;
 	var keys = Object.keys(self._vvwe._v);
-	var partitionSize = Math.ceil( keys.length / n.length );
-	var partitionNumber = 0;
-	if ( partitionSize > 0){
-	    partitionNumber = Math.ceil( keys.length / partitionSize );
-	};
-	for (var i = 0; i < partitionNumber; ++i){
-	    var result = [];
-	    for (var j=0; j < partitionSize; ++j){
-		var entry = keys[j*partitionNumber + i];
-		if((entry in self._vvwe._x) &&
-		   self._vvwe._x[entry].length > 0){
-		    var couple = {_e:keys[i], _c:(self._vvwe._x[entry]) };
-		    result.push(couple);
-		};
+	var result = [];
+	for (var i = 0; i < keys.length; ++i){
+	    var entry = keys[i];
+	    if((entry in self._vvwe._x) &&
+	       self._vvwe._x[entry].length > 0){
+		var couple = {_e:keys[i], _c:(self._vvwe._x[entry]) };
+		result.push(couple);
 	    };
-	    if (result.length > 0){
-		msg = new Buffer(JSON.stringify({_request:result}));
-		for (var k=0; k < c.AENEIGHBOURS;++k){// send to part of neighb
-		    if ((i+k) in n){
-			self._msgSize += msg.length; // metrology
-			self._msgCount += 1; // metrology
-			n[i+k].socket.send(['peer','operationRequest'],msg);
-		    };
-		};
-		
+	};
+	if (result.length > 0){
+	    msg = JSON.stringify({_request:result});
+	    for (var k=0; k < self.peers.list.length ;++k){
+//		self._msgSize += msg.length; // metrology
+//		self._msgCount += 1; // metrology
+		self.peers.list[k].socket.send(['peer','operationRequest'],
+					       msg);
 	    };
 	};
     }, c.ANTIENTROPY); // End anti-entropy
 
-//     // anti entropy of random column
-//     setInterval(function(){
-// 	var keys = Object.keys(self._vvwe._v);
-// 	var row = Math.floor(Math.random()*keys.length);
-// 	var result = [];
-// 	if (self._vvwe._x[keys[row]].length > 0){
-// 	    var couple = {_e:keys[row], _c:(self._vvwe._x[keys[row]]) };
-// 	    result.push(couple);
-// 	};
-// 	if (result.length > 0){
-// 	    var msg = new Buffer(result);
-// 	    self.broadcast(msg);
-// 	};
-//     }, 4000); // End anti-entropy with random column
 };
 
 Peer.prototype.receive = function(operation){
