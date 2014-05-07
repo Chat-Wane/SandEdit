@@ -60,6 +60,10 @@ Base.prototype.getInterval = function(p, q, level){
     } else {
 	next = BI.int2bigInt(0,bitBaseSum);
         BI.copy_(next, q._d);
+	if ((level==(p._c.length+1))&&(level==(q._c.length+1))&&
+	    (BI.equals(p._d,q._d))){
+	    BI.addInt_(next,1);
+	};
 	BI.leftShift_(next, bitBaseSum - nextBitLength);
     };
     
