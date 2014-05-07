@@ -26,8 +26,9 @@ var lseqArray = new LSEQArray(site);
 var ei = lseqArray.insert("A",0);
 
 // #2b inserting an element that comes from a remote insert
-// rei: a couple {_e: the element, _i: its unique identifier}
-var index = lseqArray.applyInsert(rei);
+// re: the element remotely inserted
+// ri: the unique identifier of the element
+var index = lseqArray.applyInsert(re, ri);
 
 // #3a deleting the element at targeted index
 // i: the unique identifier of the element at the index
