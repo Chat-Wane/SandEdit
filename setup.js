@@ -9,10 +9,14 @@ var peers = [];
 
 // #A create all peers
 for (var i=0; i < c.PEERS; ++i){
+    setTimeout( createPeer, i*2000, i);
+};
+
+function createPeer(i){
    // #1 create membership
     var m = new M(c.SUBNET, c.PORT+i);
 
-    var uid = c.PEERS*(parseInt(m._localIP.split('.')[3]))+i;    
+    var uid = c.PEERS*(parseInt(m._localIP.split('.')[3]))+i;
 
     // #2 create application
     var a = new A(uid);
@@ -23,6 +27,7 @@ for (var i=0; i < c.PEERS; ++i){
     // #3b register the peer
     peers.push(p);
 };
+
 
 setTimeout(exportNeighbours, Math.floor(c.STARTTIME/2));
 
